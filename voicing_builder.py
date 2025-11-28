@@ -237,7 +237,7 @@ class VoicingBuilderGUI:
 
         # Preview si aplica
         if self.preview_enabled.get():
-            reproducir_notas_ordenadas_threaded(player, notas, duracion=0.1)
+            reproducir_acorde_threaded(player, notas, duracion=10)
 
     # ---------------- add_note ----------------
     def add_note(self):
