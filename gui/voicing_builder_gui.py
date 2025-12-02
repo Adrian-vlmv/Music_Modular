@@ -381,6 +381,15 @@ class VoicingBuilderGUI:
             if octave in self.octavas:
                 self.combo_octava.set(octave)
 
+        # Reproducir la nota seleccionada si el preview está activado
+        try:
+            if self.preview_enabled.get():
+                # nota_sel ya tiene el formato correcto (ej. 'C4' o 'C#4')
+                reproducir_acorde_threaded(self.player, [nota_sel], duracion=0.6)
+        except Exception:
+            # no bloquear la GUI si falla la reproducción
+            pass
+
 
     ## ------------------------------
     ## Function: clear_notes
