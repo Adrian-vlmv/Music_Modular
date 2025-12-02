@@ -154,6 +154,14 @@ def reproducir_notas_ordenadas_threaded(player, notas, duracion):
     ).start()
 
 
+## -----------------------------
+## Function: reproducir_acorde_mientras
+## Description: Reproduce un acorde mientras se mantenga presionada una hotkey.
+##
+## \param player: Objeto del reproductor MIDI.
+## \param notas: Lista de notas (ej. ["C4", "E4", "G4"]).
+## \param hotkey: Identificador único para la hotkey.
+## -----------------------------
 def reproducir_acorde_mientras(player, notas, hotkey):
     midi_nums = [BD_Notas_Midi[n] for n in notas if n in BD_Notas_Midi]
 
@@ -176,5 +184,10 @@ def reproducir_acorde_mientras(player, notas, hotkey):
     threading.Thread(target=hold, daemon=True).start()
 
 
-def detener_acorde(player, notas, hotkey):
+## -----------------------------
+## Function: detener_acorde
+## Description: Detiene la reproducción del acorde asociado a la hotkey.
+##
+## \param hotkey: Identificador único para la hotkey.
+def detener_acorde(hotkey):
     holding_flags[hotkey] = False

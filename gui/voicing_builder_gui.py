@@ -6,8 +6,9 @@
 ## --------------------------------------------------------------------------------------------------------------------
 
 import re
+import os
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog
+from tkinter import ttk, messagebox, simpledialog, filedialog
 
 from midi_engine.chords import (
     reproducir_acorde_threaded,
@@ -17,7 +18,8 @@ from midi_engine.chords import (
     reproducir_notas_ordenadas_threaded
 )
 from midi_engine.notes_db import BD_Notas_Midi
-from midi_engine.voicing_storage import load_voicings, save_voicings
+from storage_engine.voicing_storage import load_voicings, save_voicings
+
 
 
 
@@ -37,6 +39,19 @@ class VoicingBuilderGUI:
         self.root = root
         self.player = player
         root.title("Voicing Builder")
+
+        # -------------------------------------------------------
+        #                     MENU SUPERIOR
+        # -------------------------------------------------------
+        menubar = tk.Menu(root)
+        root.config(menu=menubar)
+
+        menu_file = tk.Menu(menubar, tearoff=False)
+        menubar.add_cascade(label="File", menu=menu_file)
+
+        menu_file.add_command(label="Load", command=self.load_other_json)
+
+
 
         self.root.bind("<KeyPress>", self.on_hotkey_press)
         self.root.bind("<KeyRelease>", self.on_hotkey_release)
@@ -180,7 +195,7 @@ class VoicingBuilderGUI:
 
 
     ## ----------------------------------------------------------------------------------------------------------------
-    ## metodoes de la clase
+    ##               MÉTODOS DE LA CLASE
     ## ----------------------------------------------------------------------------------------------------------------
 
     ## ------------------------------
@@ -663,9 +678,35 @@ class VoicingBuilderGUI:
             if v.get("hotkey") == hk:
                 notas = v.get("notes", [])
                 if notas:
-                    detener_acorde(self.player, notas, hk)
+                    detener_acorde(hk)
                 return
 
 
+    ## ------------------------------
+    ## Function: load_other_json
+    ## Description: Carga voicings desde otro archivo JSON.
+    ## ------------------------------
+    def load_other_json(self):
+        # Ruta absoluta a la carpeta 'data' dentro de 'storage_engine'
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        data_dir = os.path.join(base_dir, "storage_engine", "data")
 
+        ruta = filedialog.askopenfilename(
+            initialdir=data_dir,
+            title="Seleccionar archivo JSON",
+            filetypes=[("JSON Files", "*.json")]
+        )
+        if not ruta:
+            return
 
+        # Abrir archivo seleccionado
+        import json
+        with open(ruta, "r") as f:
+            data = json.load(f)
+
+        voicings = data.get("voicings", [])
+
+        save_voicings(voicings)
+
+        self.voicings = voicings
+        self.update_tree()

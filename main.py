@@ -13,5 +13,11 @@ def main():
     gui = VoicingBuilderGUI(root, player)
     root.mainloop()
 
+
+## -----------------------------
+## Main execution
+##
+## Description: Ejecuta la función main si el script es el principal.
+## -----------------------------
 if __name__ == "__main__":
     main()
