@@ -779,12 +779,20 @@ class VoicingBuilderGUI:
         self.root.quit()
 
 
+    ## ------------------------------
+    ## Function: _get_data_dir
+    ## Description: Ruta absoluta al folder storage_engine/data
+    ## ------------------------------
     def _get_data_dir(self):
         """Ruta absoluta al folder storage_engine/data"""
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        return os.path.join(base_dir, "storage_engine", "data")
+        return os.path.join(base_dir, "storage_engine", "recent_data")
 
 
+    ## ------------------------------
+    ## Function: load_recent_files
+    ## Description: Carga recent_files.json y devuelve lista (o lista vacía).
+    ## ------------------------------
     def load_recent_files(self):
         """Carga recent_files.json y devuelve lista (o lista vacía)."""
         data_dir = self._get_data_dir()
@@ -798,6 +806,10 @@ class VoicingBuilderGUI:
             return []
 
 
+    ## ------------------------------
+    ## Function: save_recent_files
+    ## Description: Guarda self.recent_files en recent_files.json
+    ## ------------------------------
     def save_recent_files(self):
         """Guarda self.recent_files en recent_files.json"""
         data_dir = self._get_data_dir()
@@ -808,6 +820,10 @@ class VoicingBuilderGUI:
             json.dump({"recent": self.recent_files}, f, indent=4)
 
 
+    ## ------------------------------
+    ## Function: update_recent_menu
+    ## Description: Reconstruye el submenu Recent en base a self.recent_files.
+    ## ------------------------------
     def update_recent_menu(self):
         """Reconstruye el submenu Recent en base a self.recent_files."""
         try:
@@ -827,6 +843,11 @@ class VoicingBuilderGUI:
         self.recent_menu.add_command(label="Clear Recent", command=self.clear_recent_files)
 
 
+    ## ------------------------------
+    ## Function: add_recent_file
+    ## Description: Agrega path al inicio de la lista de recientes (sin duplicados), limita a 10 y guarda.
+    ## param path: ruta al archivo JSON.
+    ## ------------------------------
     def add_recent_file(self, path):
         """Agrega path al inicio de la lista de recientes (sin duplicados), limita a 10 y guarda."""
         if not path:
@@ -840,6 +861,11 @@ class VoicingBuilderGUI:
         self.update_recent_menu()
 
 
+    ## ------------------------------
+    ## Function: load_recent_file
+    ## Description: Carga un archivo reciente y lo aplica (similar a load_other_json pero sin dialog).
+    ## param path: ruta al archivo JSON.
+    ## ------------------------------
     def load_recent_file(self, path):
         """Carga un archivo reciente y lo aplica (similar a load_other_json pero sin dialog)."""
         try:
@@ -861,6 +887,10 @@ class VoicingBuilderGUI:
             messagebox.showerror("Error", f"Error loading file:\n{e}")
 
 
+    # ------------------------------
+    # Function: clear_recent_files
+    # Description: Limpia la lista de archivos recientes.
+    # ------------------------------
     def clear_recent_files(self):
         self.recent_files = []
         self.save_recent_files()
