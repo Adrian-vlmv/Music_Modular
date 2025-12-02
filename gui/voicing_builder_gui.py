@@ -46,13 +46,27 @@ class VoicingBuilderGUI:
         menubar = tk.Menu(root)
         root.config(menu=menubar)
 
-        menu_file = tk.Menu(menubar, tearoff=False)
-        menubar.add_cascade(label="File", menu=menu_file)
+        # File menu (ahora accesible desde self.menu_file para actualizar el submenu Recent)
+        self.menu_file = tk.Menu(menubar, tearoff=False)
+        menubar.add_cascade(label="File", menu=self.menu_file)
 
-        menu_file.add_command(label="Load", command=self.load_other_json)
-        menu_file.add_command(label="Save As...", command=self.save_voicings_as_other_file)
-        menu_file.add_command(label="Exit", command=self.quit)
-        
+        self.menu_file.add_command(label="Load", command=self.load_other_json)
+        self.menu_file.add_command(label="Save As...", command=self.save_voicings_as_other_file)
+
+        # Recent submenu (se llena dinámicamente)
+        self.recent_menu = tk.Menu(self.menu_file, tearoff=False)
+        self.menu_file.add_cascade(label="Recent", menu=self.recent_menu)
+
+        # linea divisoria
+        self.menu_file.add_separator()
+
+        # exit
+        self.menu_file.add_command(label="Exit", command=self.quit)
+
+        # Cargar lista de recientes y actualizar el menu
+        self.recent_files = self.load_recent_files()
+        self.update_recent_menu()
+
         # -------------------------------------------------------
 
 
@@ -691,6 +705,7 @@ class VoicingBuilderGUI:
     ## Description: Carga voicings desde otro archivo JSON.
     ## ------------------------------
     def load_other_json(self):
+        """Carga voicings desde otro archivo JSON."""
         # Ruta absoluta a la carpeta 'data' dentro de 'storage_engine'
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         data_dir = os.path.join(base_dir, "storage_engine", "data")
@@ -705,8 +720,12 @@ class VoicingBuilderGUI:
 
         # Abrir archivo seleccionado
         import json
-        with open(ruta, "r") as f:
-            data = json.load(f)
+        try:
+            with open(ruta, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al leer el archivo:\n{e}")
+            return
 
         voicings = data.get("voicings", [])
 
@@ -714,6 +733,12 @@ class VoicingBuilderGUI:
 
         self.voicings = voicings
         self.update_tree()
+
+        # Añadir a recientes y actualizar menu
+        try:
+            self.add_recent_file(ruta)
+        except Exception:
+            pass
 
 
     ## ------------------------------
@@ -742,6 +767,9 @@ class VoicingBuilderGUI:
 
         messagebox.showinfo("Guardado", f"Voicings guardados en '{ruta}'.")
 
+        # agregar a recientes
+        self.add_recent_file(ruta)
+
 
     ## ------------------------------
     ## Function: quit
@@ -749,3 +777,91 @@ class VoicingBuilderGUI:
     ## ------------------------------
     def quit(self):
         self.root.quit()
+
+
+    def _get_data_dir(self):
+        """Ruta absoluta al folder storage_engine/data"""
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        return os.path.join(base_dir, "storage_engine", "data")
+
+
+    def load_recent_files(self):
+        """Carga recent_files.json y devuelve lista (o lista vacía)."""
+        data_dir = self._get_data_dir()
+        path = os.path.join(data_dir, "recent_files.json")
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                import json
+                data = json.load(f)
+                return data.get("recent", []) if isinstance(data, dict) else []
+        except Exception:
+            return []
+
+
+    def save_recent_files(self):
+        """Guarda self.recent_files en recent_files.json"""
+        data_dir = self._get_data_dir()
+        os.makedirs(data_dir, exist_ok=True)
+        path = os.path.join(data_dir, "recent_files.json")
+        with open(path, "w", encoding="utf-8") as f:
+            import json
+            json.dump({"recent": self.recent_files}, f, indent=4)
+
+
+    def update_recent_menu(self):
+        """Reconstruye el submenu Recent en base a self.recent_files."""
+        try:
+            self.recent_menu.delete(0, tk.END)
+        except Exception:
+            pass
+
+        if not self.recent_files:
+            self.recent_menu.add_command(label="(no recent files)", state="disabled")
+        else:
+            for p in self.recent_files:
+                display = os.path.basename(p)
+                # usar lambda p=p para capturar la ruta actual
+                self.recent_menu.add_command(label=f"{display}", command=lambda p=p: self.load_recent_file(p))
+
+        self.recent_menu.add_separator()
+        self.recent_menu.add_command(label="Clear Recent", command=self.clear_recent_files)
+
+
+    def add_recent_file(self, path):
+        """Agrega path al inicio de la lista de recientes (sin duplicados), limita a 10 y guarda."""
+        if not path:
+            return
+        if path in self.recent_files:
+            self.recent_files.remove(path)
+        self.recent_files.insert(0, path)
+        # limitar a 10
+        self.recent_files = self.recent_files[:10]
+        self.save_recent_files()
+        self.update_recent_menu()
+
+
+    def load_recent_file(self, path):
+        """Carga un archivo reciente y lo aplica (similar a load_other_json pero sin dialog)."""
+        try:
+            import json
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            voicings = data.get("voicings", [])
+
+            save_voicings(voicings)
+
+            self.voicings = voicings
+            self.update_tree()
+
+            # messagebox.showinfo("Loaded", f"Loaded voicings from '{path}'.")
+
+            # actualizar lista de recientes
+            self.add_recent_file(path)
+        except Exception as e:
+            messagebox.showerror("Error", f"Error loading file:\n{e}")
+
+
+    def clear_recent_files(self):
+        self.recent_files = []
+        self.save_recent_files()
+        self.update_recent_menu()

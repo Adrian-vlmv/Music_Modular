@@ -1,101 +1,101 @@
 {
     "voicings": [
         {
-            "name": "m6 Drop2",
+            "name": "m6",
             "root": "C3",
             "notes": [
-                "C4",
-                "D#4",
+                "C3",
+                "D#3",
                 "G3",
-                "A4"
+                "A3"
             ],
             "hotkey": "1"
         },
         {
-            "name": "dim7 Drop2",
+            "name": "dim7",
             "root": "D3",
             "notes": [
-                "D4",
-                "F4",
+                "D3",
+                "F3",
                 "Ab3",
-                "B4"
+                "B3"
             ],
             "hotkey": "2"
         },
         {
-            "name": "m6 1Inv Drop2",
+            "name": "m6 1Inv",
             "root": "C3",
             "notes": [
-                "D#4",
-                "G4",
+                "D#3",
+                "G3",
                 "A3",
-                "C5"
+                "C4"
             ],
             "hotkey": "3"
         },
         {
-            "name": "dim7 1Inv Drop2",
+            "name": "dim7 1Inv",
             "root": "D3",
             "notes": [
-                "F4",
-                "Ab4",
+                "F3",
+                "Ab3",
                 "B3",
-                "D5"
+                "D4"
             ],
             "hotkey": "4"
         },
         {
-            "name": "m6 2Inv Drop2",
+            "name": "m6 2Inv",
             "root": "C3",
             "notes": [
-                "G4",
-                "A4",
+                "G3",
+                "A3",
                 "C4",
-                "D#5"
+                "D#4"
             ],
             "hotkey": "5"
         },
         {
-            "name": "dim7 2Inv Drop2",
+            "name": "dim7 2Inv",
             "root": "D3",
             "notes": [
-                "Ab4",
-                "B4",
+                "Ab3",
+                "B3",
                 "D4",
-                "F5"
+                "F4"
             ],
             "hotkey": "6"
         },
         {
-            "name": "m6 3Inv Drop2",
+            "name": "m6 3Inv",
             "root": "C3",
             "notes": [
-                "A4",
-                "C5",
+                "A3",
+                "C4",
                 "D#4",
-                "G5"
+                "G4"
             ],
             "hotkey": "7"
         },
         {
-            "name": "Dim7 3Inv Drop2",
+            "name": "Dim7 3Inv",
             "root": "D3",
             "notes": [
-                "B4",
-                "D5",
+                "B3",
+                "D4",
                 "F4",
-                "Ab5"
+                "Ab4"
             ],
             "hotkey": "8"
         },
         {
-            "name": "m6 2 Drop2",
+            "name": "m6 2",
             "root": "C4",
             "notes": [
-                "C5",
-                "D#5",
+                "C4",
+                "D#4",
                 "G4",
-                "A5"
+                "A4"
             ],
             "hotkey": "9"
         }
