@@ -1,11 +1,18 @@
 # gui/voicing_builder_gui.py
 
+
+## --------------------------------------------------------------------------------------------------------------------
+##                                           IMPORTS
+## --------------------------------------------------------------------------------------------------------------------
+
 import re
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 
 from midi_engine.chords import (
     reproducir_acorde_threaded,
+    reproducir_acorde_mientras,
+    detener_acorde,
     reproducir_notas_secuenciales_threaded,
     reproducir_notas_ordenadas_threaded
 )
@@ -13,11 +20,14 @@ from midi_engine.notes_db import BD_Notas_Midi
 from midi_engine.voicing_storage import load_voicings, save_voicings
 
 
-## ------------------------------
+
+
+## --------------------------------------------------------------------------------------------------------------------
 ## Class: VoicingBuilderGUI
 ## Description: Clase principal para la GUI del Voicing Builder.
-## ------------------------------
+## --------------------------------------------------------------------------------------------------------------------
 class VoicingBuilderGUI:
+
 
     ## ------------------------------
     ## Function: __init__
@@ -27,6 +37,12 @@ class VoicingBuilderGUI:
         self.root = root
         self.player = player
         root.title("Voicing Builder")
+
+        self.root.bind("<KeyPress>", self.on_hotkey_press)
+        self.root.bind("<KeyRelease>", self.on_hotkey_release)
+
+        self.active_hotkeys = set()
+
 
         # Datos
         # load_voicings() debe devolver lista de dicts con keys: name, root, notes
@@ -133,9 +149,6 @@ class VoicingBuilderGUI:
         self.tree.grid(row=0, column=0, padx=5, pady=5)
         self.tree.bind("<<TreeviewSelect>>", self.on_voicing_click)
 
-        # Registrar hotkeys (a-z, 0-9)
-        self.root.bind("<Key>", self.on_key_press)
-
         # Botones extra: eliminar, renombrar, mover
         btn_delete_voicing = ttk.Button(frame_saved, text="Delete Voicing",
                                         command=self.delete_voicing)
@@ -165,6 +178,10 @@ class VoicingBuilderGUI:
                                       variable=self.preview_enabled)
         chk_preview.grid(row=3, column=0, padx=5, pady=5, sticky="w")
 
+
+    ## ----------------------------------------------------------------------------------------------------------------
+    ## metodoes de la clase
+    ## ----------------------------------------------------------------------------------------------------------------
 
     ## ------------------------------
     ## Function: assign_hotkey
@@ -256,9 +273,9 @@ class VoicingBuilderGUI:
         # Habilitar Save (estás editando un voicing existente)
         self.btn_save.state(["!disabled"])
 
-        # Preview si aplica
+        # Reproducir preview si está habilitado
         if self.preview_enabled.get():
-            reproducir_acorde_threaded(self.player, notas, duracion=10)
+            reproducir_acorde_threaded(self.player, notas, duracion=1.0)
 
 
     ## ------------------------------
@@ -598,3 +615,57 @@ class VoicingBuilderGUI:
         self.tree.selection_set(item)
         self.tree.focus(item)
         self.on_voicing_click(None)
+
+
+    ## ------------------------------
+    ## Function: on_hotkey_press
+    ## Description: Maneja la pulsación de hotkeys para reproducir acordes.
+    ## \param event: evento de teclado.
+    ## ------------------------------
+    def on_hotkey_press(self, event):
+        hk = event.keysym.lower()
+        if not hk:
+            return
+
+        # evitar repetición por autorepeat
+        if hk in self.active_hotkeys:
+            return
+
+        self.active_hotkeys.add(hk)
+
+        # buscar voicing
+        for v in self.voicings:
+            if v.get("hotkey") == hk:
+                notas = v.get("notes", [])
+                if notas:
+                    reproducir_acorde_mientras(self.player, notas, hk)
+                return
+
+
+    ## ------------------------------
+    ## Function: on_hotkey_release
+    ## Description: Maneja la liberación de hotkeys para detener acordes.
+    ## \param event: evento de teclado.
+    ## ------------------------------
+    def on_hotkey_release(self, event):
+        hk = event.keysym.lower()
+        if not hk:
+            return
+
+        # si no estaba activado, ignorar release falso
+        if hk not in self.active_hotkeys:
+            return
+
+        self.active_hotkeys.remove(hk)
+
+        # buscar voicing y apagar
+        for v in self.voicings:
+            if v.get("hotkey") == hk:
+                notas = v.get("notes", [])
+                if notas:
+                    detener_acorde(self.player, notas, hk)
+                return
+
+
+
+

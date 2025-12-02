@@ -1,6 +1,21 @@
+## --------------------------------------------------------------------------------------------------------------------
+##                                           IMPORTS
+## --------------------------------------------------------------------------------------------------------------------
+
 import time
 from .notes_db import BD_Notas_Midi
 import threading
+
+
+## --------------------------------------------------------------------------------------------------------------------
+##                                           GLOBAL VARIABLES
+## --------------------------------------------------------------------------------------------------------------------
+holding_flags = {}   # estado por hotkey → True/False
+
+
+## --------------------------------------------------------------------------------------------------------------------
+##                                            FUNCTIONS
+## --------------------------------------------------------------------------------------------------------------------
 
 ## -----------------------------
 ## Function: reproducir_acorde
@@ -25,7 +40,7 @@ def reproducir_acorde(player, notas, duracion):
 ## -----------------------------
 ## Function: reproducir_acorde_threaded
 ##
-## Description: Reproduce un acorde en un hilo separado.
+## Description: Reproduce un acorde en un hilo independiente.
 ##
 ## \param player: Objeto del reproductor MIDI.
 ## \param notas: Lista de notas (ej. ["C4", "E4", "G4"]).
@@ -34,11 +49,13 @@ def reproducir_acorde(player, notas, duracion):
 ## \return: None
 ## -----------------------------
 def reproducir_acorde_threaded(player, notas, duracion):
+    # Apagar notas previas en un thread
     threading.Thread(
         # Cortar notas previas antes de iniciar el nuevo hilo
         apagar_todas_las_notas(player)
     ).start()
 
+    # Reproducir acorde en un thread
     threading.Thread(
         target=reproducir_acorde,
         args=(player, notas, duracion),
@@ -135,3 +152,29 @@ def reproducir_notas_ordenadas_threaded(player, notas, duracion):
         args=(player, notas, duracion),
         daemon=True
     ).start()
+
+
+def reproducir_acorde_mientras(player, notas, hotkey):
+    midi_nums = [BD_Notas_Midi[n] for n in notas if n in BD_Notas_Midi]
+
+    # Marcar que esta hotkey está activa
+    holding_flags[hotkey] = True
+
+    def hold():
+        # ENCENDER una sola vez
+        for m in midi_nums:
+            player.note_on(m, 127)
+
+        # Esperar mientras la tecla está presionada
+        while holding_flags.get(hotkey, False):
+            time.sleep(0.01)
+
+        # Cuando se suelta → apagar notas
+        for m in midi_nums:
+            player.note_off(m, 0)
+
+    threading.Thread(target=hold, daemon=True).start()
+
+
+def detener_acorde(player, notas, hotkey):
+    holding_flags[hotkey] = False
