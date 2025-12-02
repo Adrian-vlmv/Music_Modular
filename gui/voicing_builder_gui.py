@@ -50,6 +50,10 @@ class VoicingBuilderGUI:
         menubar.add_cascade(label="File", menu=menu_file)
 
         menu_file.add_command(label="Load", command=self.load_other_json)
+        menu_file.add_command(label="Save As...", command=self.save_voicings_as_other_file)
+        menu_file.add_command(label="Exit", command=self.quit)
+        
+        # -------------------------------------------------------
 
 
 
@@ -710,3 +714,38 @@ class VoicingBuilderGUI:
 
         self.voicings = voicings
         self.update_tree()
+
+
+    ## ------------------------------
+    ## Function: save_voicings_as_other_file
+    ## Description: Guarda los voicings actuales en otro archivo JSON.
+    ## ------------------------------
+    def save_voicings_as_other_file(self):
+        # Ruta absoluta a la carpeta 'data' dentro de 'storage_engine'
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        data_dir = os.path.join(base_dir, "storage_engine", "data")
+
+        ruta = filedialog.asksaveasfilename(
+            initialdir=data_dir,
+            title="Guardar archivo JSON como",
+            defaultextension=".json",
+            filetypes=[("JSON Files", "*.json")]
+        )
+        if not ruta:
+            return
+
+        # Guardar en el archivo seleccionado
+        import json
+        data = {"voicings": self.voicings}
+        with open(ruta, "w") as f:
+            json.dump(data, f, indent=4)
+
+        messagebox.showinfo("Guardado", f"Voicings guardados en '{ruta}'.")
+
+
+    ## ------------------------------
+    ## Function: quit
+    ## Description: Cierra la aplicación.
+    ## ------------------------------
+    def quit(self):
+        self.root.quit()

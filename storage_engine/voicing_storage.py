@@ -26,6 +26,7 @@ def ensure_directory():
     if not os.path.exists(VOICINGS_DIR):
         os.makedirs(VOICINGS_DIR)
 
+
 ## -----------------------------
 ## function: load_voicings
 ## description: Carga la lista de voicings desde un archivo JSON.
@@ -44,6 +45,7 @@ def load_voicings():
     except:
         return []
 
+
 ## -----------------------------
 ## function: save_voicings
 ## description: Guarda la lista de voicings en un archivo JSON.
@@ -57,3 +59,16 @@ def save_voicings(voicings_list):
     with open(ARCHIVO_VOICINGS, "w") as f:
         json.dump(data, f, indent=4)
 
+
+## -----------------------------
+## function: save_voicings_as_other_file
+## description: Guarda la lista de voicings en un archivo JSON especificado por el usuario
+## \param voicings_list: Lista de voicings (cada uno es lista de notas)
+## \param file_path: Ruta del archivo donde guardar
+## \return: None
+## -----------------------------
+def save_voicings_as_other_file(voicings_list, file_path):
+    data = {"voicings": voicings_list}
+
+    with open(file_path, "w") as f:
+        json.dump(data, f, indent=4)
