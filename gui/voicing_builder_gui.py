@@ -24,6 +24,9 @@ from storage_engine.voicing_storage import load_voicings, save_voicings
 
 
 
+
+
+
 ## --------------------------------------------------------------------------------------------------------------------
 ## Class: VoicingBuilderGUI
 ## Description: Clase principal para la GUI del Voicing Builder.
@@ -82,7 +85,7 @@ class VoicingBuilderGUI:
         self.voicings = load_voicings()
         self.current_voicing_name = None  # nombre del voicing que estamos editando
         self.current_voicing_index = None
-        self.preview_enabled = tk.BooleanVar(value=True)
+        self.preview_enabled = tk.BooleanVar(value=False)
 
         # ------------------------------
         #   NOTAS DISPONIBLES
@@ -211,6 +214,25 @@ class VoicingBuilderGUI:
                                       variable=self.preview_enabled)
         chk_preview.grid(row=3, column=0, padx=5, pady=5, sticky="w")
 
+        # -----------------------------------------------------------------
+        # Selección inicial: si hay voicings, seleccionar el primero y cargarlo
+        # -----------------------------------------------------------------
+        try:
+            children = self.tree.get_children()
+            if children:
+                first = children[0]
+                self.tree.selection_set(first)
+                self.tree.focus(first)
+                # cargar como si se hubiera clicado
+                self.on_voicing_click(None)
+                # seleccionar la primera nota del voicing actual si existe
+                if self.voicing_listbox.size() > 0:
+                    self.voicing_listbox.selection_set(0)
+                    self.voicing_listbox.see(0)
+                    # actualizar comboboxes y reproducir preview si está activo
+                    self.on_note_select(None)
+        except Exception:
+            pass
 
     ## ----------------------------------------------------------------------------------------------------------------
     ##               MÉTODOS DE LA CLASE
@@ -282,6 +304,15 @@ class VoicingBuilderGUI:
         self.voicing_listbox.delete(0, tk.END)
         for n in notas:
             self.voicing_listbox.insert(tk.END, n)
+
+        # seleccionar la primera nota del listbox (si existe) para mostrarla y permitir preview
+        try:
+            if self.voicing_listbox.size() > 0:
+                self.voicing_listbox.selection_clear(0, tk.END)
+                self.voicing_listbox.selection_set(0)
+                self.voicing_listbox.see(0)
+        except Exception:
+            pass
 
         # Cargar root en comboboxes si está bien formado
         if root_note:
