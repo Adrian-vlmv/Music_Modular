@@ -3,9 +3,17 @@
 ## --------------------------------------------------------------------------------------------------------------------
 
 import time
-from .notes_db import BD_Notas_Midi
 import threading
 
+try:
+    # When the file is executed as part of the package
+    from .notes_db import BD_Notas_Midi
+    from .midi_setup import iniciar_sistema_midi
+
+except ImportError:
+    # When the file is executed directly (for testing)
+    from notes_db import BD_Notas_Midi
+    from midi_setup import iniciar_sistema_midi
 
 ## --------------------------------------------------------------------------------------------------------------------
 ##                                           GLOBAL VARIABLES
@@ -191,3 +199,23 @@ def reproducir_acorde_mientras(player, notas, hotkey):
 ## \param hotkey: Identificador único para la hotkey.
 def detener_acorde(hotkey):
     holding_flags[hotkey] = False
+
+
+
+if __name__ == "__main__":
+
+    # Prueba rápida
+    class DummyPlayer:
+        def note_on(self, note, vel):
+            print(f"Note ON: {note} Vel: {vel}")
+
+        def note_off(self, note, vel):
+            print(f"Note OFF: {note} Vel: {vel}")
+
+    player = iniciar_sistema_midi()
+    reproducir_acorde_threaded(player, ["C4", "E4", "G4", "C5"], 1)
+    time.sleep(2)
+    reproducir_notas_secuenciales_threaded(player, ["C4", "E4", "G4", "C5"], 0.5)
+    time.sleep(3)
+    reproducir_notas_ordenadas_threaded(player, ["G4", "C4", "E4", "C5"], 0.5)
+    time.sleep(3)

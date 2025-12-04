@@ -22,11 +22,6 @@ from storage_engine.voicing_storage import load_voicings, save_voicings
 
 
 
-
-
-
-
-
 ## --------------------------------------------------------------------------------------------------------------------
 ## Class: VoicingBuilderGUI
 ## Description: Clase principal para la GUI del Voicing Builder.
@@ -233,6 +228,7 @@ class VoicingBuilderGUI:
                     self.on_note_select(None)
         except Exception:
             pass
+
 
     ## ----------------------------------------------------------------------------------------------------------------
     ##               MÉTODOS DE LA CLASE
