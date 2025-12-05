@@ -1,0 +1,69 @@
+[
+    {
+        "name": "4 negras",
+        "compases": [
+            [
+                "negra",
+                "negra",
+                "negra",
+                "negra"
+            ]
+        ],
+        "tempo": 120
+    },
+    {
+        "name": "8 corcheas",
+        "compases": [
+            [
+                "corchea",
+                "corchea",
+                "corchea",
+                "corchea",
+                "corchea",
+                "corchea",
+                "corchea",
+                "corchea"
+            ]
+        ],
+        "tempo": 120
+    },
+    {
+        "name": "16 semicorcheas",
+        "compases": [
+            [
+                "semicorchea",
+                "semicorchea",
+                "semicorchea",
+                "semicorchea",
+                "semicorchea",
+                "semicorchea",
+                "semicorchea",
+                "semicorchea",
+                "semicorchea",
+                "semicorchea",
+                "semicorchea",
+                "semicorchea",
+                "semicorchea",
+                "semicorchea",
+                "semicorchea",
+                "semicorchea"
+            ]
+        ],
+        "tempo": 120
+    },
+    {
+        "name": "Erik_001",
+        "compases": [
+            [
+                "corchea",
+                "corchea",
+                "silencio_corchea",
+                "silencio_corchea"
+            ],
+            [
+                "redonda"
+            ]
+        ],
+        "tempo": 120
+    }
+]

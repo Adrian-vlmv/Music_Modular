@@ -1,5 +1,12 @@
-import pygame.midi
 import sys
+import os
+
+# silenciar temporalmente los mensajes de pygame y pygame.midi
+sys.stdout = open(os.devnull, 'w')
+import pygame
+import pygame.midi
+sys.stdout = sys.__stdout__  # restaurar stdout
+
 
 ## -----------------------------
 ## Function: iniciar_sistema_midi

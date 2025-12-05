@@ -1,6 +1,7 @@
 import tkinter as tk
 from midi_engine.midi_setup import iniciar_sistema_midi
 from gui.voicing_builder_gui import VoicingBuilderGUI
+from gui.pattern_builder_gui import RhythmBuilderGUI
 
 
 ## -----------------------------
@@ -19,7 +20,7 @@ def main():
     root.config(menu=menubar)
 
     file_menu = tk.Menu(menubar, tearoff=False)
-    menubar.add_cascade(label="File", menu=file_menu)
+    menubar.add_cascade(label="Tools", menu=file_menu)
 
     # holder para mantener la referencia a la ventana Voicing Builder (una sola instancia)
     voicing_win = {"win": None}
@@ -48,7 +49,30 @@ def main():
 
         top.protocol("WM_DELETE_WINDOW", _on_close)
 
-    file_menu.add_command(label="Open Voicing Builder", command=open_voicing_builder)
+    # holder para Rhythm Builder
+    rhythm_win = {"win": None}
+
+    def open_rhythm_builder():
+        if rhythm_win["win"] and tk.Toplevel.winfo_exists(rhythm_win["win"]):
+            rhythm_win["win"].lift()
+            return
+
+        top = tk.Toplevel(root)
+        top.title("Rhythm Builder")
+        rhythm_win["win"] = top
+
+        RhythmBuilderGUI(top, player)
+
+        def _on_close():
+            rhythm_win["win"] = None
+            top.destroy()
+
+        top.protocol("WM_DELETE_WINDOW", _on_close)
+
+    file_menu.add_command(label="Rhythm Builder", command=open_rhythm_builder)
+
+
+    file_menu.add_command(label="Voicing Builder", command=open_voicing_builder)
     file_menu.add_separator()
     file_menu.add_command(label="Exit", command=root.quit)
 
