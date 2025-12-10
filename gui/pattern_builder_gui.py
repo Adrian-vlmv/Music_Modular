@@ -17,8 +17,20 @@ from storage_engine.rhythm_storage import load_patterns, save_patterns
 
 import threading
 import copy
-# ---------------------- GUI Class ----------------------
+
+
+## ----------------------------------------------------------------
+## Class: RhythmBuilderGUI
+## Description: Interfaz gráfica para crear y editar patrones de ritmo.
+## ----------------------------------------------------------------
 class RhythmBuilderGUI:
+
+    ## ------------------------------------------------------------
+    ## Function: __init__
+    ## Description: Inicializa la GUI del Rhythm Builder.
+    ## param root: Ventana raíz o Toplevel de Tkinter.
+    ## param player: Objeto de reproducción MIDI compartido.
+    ## ------------------------------------------------------------    
     def __init__(self, root, player=None):
         self.root = root
         self.player = player
@@ -225,6 +237,11 @@ class RhythmBuilderGUI:
     ##               MÉTODOS DE LA CLASE
     ## ----------------------------------------------------------------------------------------------------------------
 
+    ## ------------------------------------------------------------
+    ## Function: delete_tiempo
+    ## Description: Elimina el/los tiempo(s) seleccionado(s) en el compás actual.
+    ## param event: Evento de Tkinter (opcional).
+    ## ------------------------------------------------------------
     def delete_tiempo(self, event=None):
         p = self.get_current_pattern()
         if not p:
@@ -247,8 +264,11 @@ class RhythmBuilderGUI:
         if len(compas) > 0:
             self.list_compas.selection_set(min(sel[0], len(compas)-1))
 
-
-
+    ## ------------------------------------------------------------
+    ## Function: insert_tiempo
+    ## Description: Inserta una copia del tiempo seleccionado justo después.
+    ## param event: Evento de Tkinter (opcional).
+    ## ------------------------------------------------------------
     def insert_tiempo(self, event=None):
         p = self.get_current_pattern()
         if not p:
@@ -267,10 +287,18 @@ class RhythmBuilderGUI:
         self.refresh_editor()
         self.list_compas.selection_set(index + 1)
 
-
+    ## ------------------------------------------------------------
+    ## Function: _on_delete_key
+    ## Description: Manejador de evento para la tecla Delete en el Treeview.
+    ## param event: Evento de Tkinter.
+    ## ------------------------------------------------------------
     def _on_delete_key(self, event):
         self.delete_pattern()
 
+    ## ------------------------------------------------------------
+    ## Function: play_preview
+    ## Description: Reproduce una vista previa del patrón actual en un hilo separado.
+    ## ------------------------------------------------------------
     def play_preview(self):
         if self._play_thread and self._play_thread.is_alive():
             # Ya se está reproduciendo
@@ -279,6 +307,10 @@ class RhythmBuilderGUI:
         self._play_thread = threading.Thread(target=self._play_pattern_thread, daemon=True)
         self._play_thread.start()
 
+    ## ------------------------------------------------------------
+    ## Function: _play_pattern_thread
+    ## Description: Hilo que maneja la reproducción del patrón actual.
+    ## ------------------------------------------------------------
     def _play_pattern_thread(self):
         p = self.get_current_pattern()
         if not p or not self.player:
@@ -330,15 +362,20 @@ class RhythmBuilderGUI:
         except Exception as exc:
             print("Error en reproducción:", exc)
 
-
-
-    
+    ## ------------------------------------------------------------
+    ## Function: stop_preview
+    ## Description: Detiene la reproducción del patrón actual.
+    ## ------------------------------------------------------------    
     def stop_preview(self):
         self._stop_playback.set()
         if self._play_thread:
             self._play_thread.join()
             self._play_thread = None
 
+    ## ------------------------------------------------------------
+    ## Function: new_pattern
+    ## Description: Crea un nuevo patrón con un nombre único y lo selecciona para edición.
+    ## ------------------------------------------------------------
     def new_pattern(self):
         # Generar nombre base
         base = "Pattern"
@@ -368,9 +405,10 @@ class RhythmBuilderGUI:
         self.update_tree()
         self.refresh_editor()
 
-
-
-
+    ## ------------------------------------------------------------
+    ## Function: load_pattern
+    ## Description: Carga el patrón seleccionado en el editor para su edición.
+    ## ------------------------------------------------------------
     def load_pattern(self):
         sel = self.tree.selection()
         if not sel:
@@ -389,7 +427,10 @@ class RhythmBuilderGUI:
         self.current_compas = 0 if self.edit_buffer.compases else -1
         self.refresh_editor()
 
-
+    ## ------------------------------------------------------------
+    ## Function: delete_pattern
+    ## Description: Elimina el/los patrón(es) seleccionado(s) después de confirmar.
+    ## ------------------------------------------------------------
     def delete_pattern(self):
         sel = self.tree.selection()
         if not sel:
@@ -425,7 +466,10 @@ class RhythmBuilderGUI:
             self.list_compas.delete(0, tk.END)
             self.lbl_compas.config(text="Compás: -")
 
-
+    ## ------------------------------------------------------------
+    ## Function: save_as
+    ## Description: Guarda el patrón actual con un nuevo nombre.
+    ## ------------------------------------------------------------
     def save_as(self):
         name = simpledialog.askstring("Save As","Nombre del patrón:")
         if not name:
@@ -438,6 +482,10 @@ class RhythmBuilderGUI:
         self.update_tree()
         messagebox.showinfo("Guardado","Patrón guardado")
 
+    ## ------------------------------------------------------------
+    ## Function: save
+    ## Description: Guarda los cambios realizados en el patrón actual.
+    ## ------------------------------------------------------------
     def save(self):
         if self.edit_buffer is None:
             return
@@ -452,6 +500,10 @@ class RhythmBuilderGUI:
         self.update_tree()
         messagebox.showinfo("Guardado", "Patrones guardados")    
 
+    ## ------------------------------------------------------------
+    ## Function: export_json
+    ## Description: Exporta los patrones actuales a un archivo JSON seleccionado por el usuario.
+    ## ------------------------------------------------------------
     def export_json(self):
         path = filedialog.asksaveasfilename(defaultextension='.json', filetypes=[('JSON','*.json')])
         if not path:
@@ -460,6 +512,10 @@ class RhythmBuilderGUI:
         sp(self.patterns, path)
         messagebox.showinfo("Export","Exportado")
 
+    ## ------------------------------------------------------------
+    ## Function: combine_patterns
+    ## Description: Combina dos patrones seleccionados en uno nuevo.
+    ## ------------------------------------------------------------
     def combine_patterns(self):
         if len(self.patterns) < 2:
             messagebox.showwarning("Insuficiente","Necesitas al menos 2 patrones para combinar")
@@ -477,6 +533,11 @@ class RhythmBuilderGUI:
         self.update_tree()
         messagebox.showinfo("Combine","Patrón combinado creado")
 
+    ## ------------------------------------------------------------
+    ## Function: on_tree_select
+    ## Description: Manejador de evento cuando se selecciona un patrón en el Treeview.
+    ## param event: Evento de Tkinter.
+    ## ------------------------------------------------------------
     def on_tree_select(self, event):
         sel = self.tree.selection()
         if not sel:
@@ -484,17 +545,24 @@ class RhythmBuilderGUI:
         i = list(self.tree.get_children()).index(sel[0])
         self.current_index = i
         self.edit_buffer = copy.deepcopy(self.patterns[i])
-        
+
         self.entry_name.delete(0, tk.END)
         self.entry_name.insert(0, self.edit_buffer.name)
-        
+
         self.current_compas = 0
         self.refresh_editor()
-        
 
+    ## ------------------------------------------------------------
+    ## Function: get_current_pattern
+    ## Description: Devuelve el patrón actualmente en edición.
+    ## ------------------------------------------------------------
     def get_current_pattern(self):
         return self.edit_buffer
 
+    ## ------------------------------------------------------------
+    ## Function: refresh_editor
+    ## Description: Actualiza la vista del editor según el patrón y compás actuales.
+    ## ------------------------------------------------------------
     def refresh_editor(self):
         p = self.get_current_pattern()
         if not p:
@@ -515,6 +583,10 @@ class RhythmBuilderGUI:
         for e in p.compases[self.current_compas]:
             self.list_compas.insert(tk.END, e)
 
+    ## ------------------------------------------------------------
+    ## Function: add_compas
+    ## Description: Agrega un nuevo compás al patrón actual.
+    ## ------------------------------------------------------------
     def add_compas(self):
         p = self.get_current_pattern()
         if not p:
@@ -523,6 +595,10 @@ class RhythmBuilderGUI:
         self.current_compas = len(p.compases)-1
         self.refresh_editor()
 
+    ## ------------------------------------------------------------
+    ## Function: delete_compas
+    ## Description: Elimina el compás actual del patrón después de confirmar.
+    ## ------------------------------------------------------------
     def delete_compas(self):
         p = self.get_current_pattern()
         if not p or len(p.compases) == 0:
@@ -533,6 +609,10 @@ class RhythmBuilderGUI:
                 self.current_compas = max(0, len(p.compases)-1)
             self.refresh_editor()
 
+    ## ------------------------------------------------------------
+    ## Function: prev_compas
+    ## Description: Navega al compás anterior en el patrón.
+    ## ------------------------------------------------------------
     def prev_compas(self):
         p = self.get_current_pattern()
         if not p:
@@ -541,6 +621,10 @@ class RhythmBuilderGUI:
             self.current_compas -= 1
             self.refresh_editor()
 
+    ## ------------------------------------------------------------
+    ## Function: next_compas
+    ## Description: Navega al siguiente compás en el patrón.
+    ## ------------------------------------------------------------
     def next_compas(self):
         p = self.get_current_pattern()
         if not p:
@@ -549,6 +633,11 @@ class RhythmBuilderGUI:
             self.current_compas += 1
             self.refresh_editor()
 
+    ## ------------------------------------------------------------
+    ## Function: add_event
+    ## Description: Agrega o modifica un evento en el compás actual.
+    ## param d: Duración del evento a agregar/modificar.
+    ## ------------------------------------------------------------
     def add_event(self, d):
         """
         Si hay un tiempo seleccionado → modificarlo (solo si cabe)
@@ -587,11 +676,10 @@ class RhythmBuilderGUI:
 
         self.refresh_editor()
 
-
-
-
-
-
+    ## ------------------------------------------------------------
+    ## Function: update_tree
+    ## Description: Actualiza el Treeview con la lista actual de patrones.
+    ## ------------------------------------------------------------
     def update_tree(self):
         self.tree.delete(*self.tree.get_children())
         for p in self.patterns:
