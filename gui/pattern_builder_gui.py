@@ -16,7 +16,7 @@ from rhythm_engine.patterns import DURACIONES, RitmoPattern
 from storage_engine.rhythm_storage import load_patterns, save_patterns
 
 import threading
-
+import copy
 # ---------------------- GUI Class ----------------------
 class RhythmBuilderGUI:
     def __init__(self, root, player=None):
@@ -28,6 +28,7 @@ class RhythmBuilderGUI:
         self.patterns = load_patterns()
         self.current_index = None
         self.current_compas = 0
+        self.edit_buffer = None
 
         # Layout
         frame_editor = ttk.LabelFrame(root, text="Editor de patrón")
@@ -351,11 +352,15 @@ class RhythmBuilderGUI:
                 break
             n += 1
 
-        # Crear patrón con nombre único
+        # Crear y agregar nuevo patrón
         p = RitmoPattern(candidate)
         self.patterns.append(p)
         self.current_index = len(self.patterns) - 1
         self.current_compas = 0
+
+        # Crear buffer editable
+        self.edit_buffer = copy.deepcopy(p)
+
 
         self.entry_name.delete(0, tk.END)
         self.entry_name.insert(0, p.name)
@@ -366,19 +371,24 @@ class RhythmBuilderGUI:
 
 
 
-
     def load_pattern(self):
         sel = self.tree.selection()
         if not sel:
             messagebox.showwarning("Nada seleccionado","Selecciona un patrón")
             return
+
         i = list(self.tree.get_children()).index(sel[0])
         self.current_index = i
-        p = self.patterns[i]
+
+        # ⚠️ EN VEZ DE EDITAR EL ORIGINAL, HACEMOS COPIA
+        self.edit_buffer = copy.deepcopy(self.patterns[i])
+
         self.entry_name.delete(0, tk.END)
-        self.entry_name.insert(0, p.name)
-        self.current_compas = 0 if p.compases else -1
+        self.entry_name.insert(0, self.edit_buffer.name)
+
+        self.current_compas = 0 if self.edit_buffer.compases else -1
         self.refresh_editor()
+
 
     def delete_pattern(self):
         sel = self.tree.selection()
@@ -429,13 +439,18 @@ class RhythmBuilderGUI:
         messagebox.showinfo("Guardado","Patrón guardado")
 
     def save(self):
-        p = self.get_current_pattern()
-        if not p:
+        if self.edit_buffer is None:
             return
-        p.name = self.entry_name.get() or p.name
+
+        # Actualizar nombre
+        self.edit_buffer.name = self.entry_name.get() or self.edit_buffer.name
+
+        # Guardar cambios en la lista real
+        self.patterns[self.current_index] = copy.deepcopy(self.edit_buffer)
+
         save_patterns(self.patterns)
         self.update_tree()
-        messagebox.showinfo("Guardado","Patrones guardados")
+        messagebox.showinfo("Guardado", "Patrones guardados")    
 
     def export_json(self):
         path = filedialog.asksaveasfilename(defaultextension='.json', filetypes=[('JSON','*.json')])
@@ -468,15 +483,17 @@ class RhythmBuilderGUI:
             return
         i = list(self.tree.get_children()).index(sel[0])
         self.current_index = i
+        self.edit_buffer = copy.deepcopy(self.patterns[i])
+        
         self.entry_name.delete(0, tk.END)
-        self.entry_name.insert(0, self.patterns[i].name)
+        self.entry_name.insert(0, self.edit_buffer.name)
+        
         self.current_compas = 0
         self.refresh_editor()
+        
 
     def get_current_pattern(self):
-        if self.current_index is None:
-            return None
-        return self.patterns[self.current_index]
+        return self.edit_buffer
 
     def refresh_editor(self):
         p = self.get_current_pattern()
