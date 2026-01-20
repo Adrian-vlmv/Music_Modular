@@ -65,5 +65,157 @@
             ]
         ],
         "tempo": 120
+    },
+    {
+        "name": "Comping_001",
+        "compases": [
+            [
+                "silencio_corchea",
+                "corchea",
+                "silencio_negra",
+                "silencio_negra",
+                "silencio_negra"
+            ]
+        ],
+        "tempo": 120
+    },
+    {
+        "name": "Comping_002",
+        "compases": [
+            [
+                "corchea",
+                "corchea",
+                "silencio_negra",
+                "silencio_negra",
+                "silencio_negra"
+            ]
+        ],
+        "tempo": 120
+    },
+    {
+        "name": "Comping_003",
+        "compases": [
+            [
+                "silencio_negra",
+                "corchea",
+                "corchea",
+                "silencio_negra",
+                "silencio_negra"
+            ]
+        ],
+        "tempo": 120
+    },
+    {
+        "name": "Comping_004",
+        "compases": [
+            [
+                "silencio_negra",
+                "silencio_negra",
+                "corchea",
+                "corchea",
+                "silencio_negra"
+            ]
+        ],
+        "tempo": 120
+    },
+    {
+        "name": "Comping_005",
+        "compases": [
+            [
+                "silencio_negra",
+                "silencio_negra",
+                "silencio_negra",
+                "corchea",
+                "corchea"
+            ]
+        ],
+        "tempo": 120
+    },
+    {
+        "name": "Comping_006",
+        "compases": [
+            [
+                "negra",
+                "silencio_corchea",
+                "corchea",
+                "silencio_negra",
+                "silencio_negra"
+            ]
+        ],
+        "tempo": 120
+    },
+    {
+        "name": "Comping_007",
+        "compases": [
+            [
+                "silencio_corchea",
+                "corchea",
+                "silencio_negra",
+                "negra",
+                "silencio_negra"
+            ]
+        ],
+        "tempo": 120
+    },
+    {
+        "name": "Comping_008",
+        "compases": [
+            [
+                "negra",
+                "silencio_negra",
+                "silencio_negra",
+                "silencio_corchea",
+                "corchea"
+            ],
+            [
+                "silencio_corchea",
+                "silencio_corchea",
+                "silencio_negra",
+                "silencio_negra",
+                "silencio_negra"
+            ]
+        ],
+        "tempo": 120
+    },
+    {
+        "name": "Comping_009",
+        "compases": [
+            [
+                "silencio_negra",
+                "silencio_corchea",
+                "corchea",
+                "silencio_negra",
+                "negra"
+            ],
+            [
+                "corchea",
+                "corchea",
+                "silencio_negra",
+                "silencio_negra",
+                "silencio_negra"
+            ]
+        ],
+        "tempo": 120
+    },
+    {
+        "name": "Comping_010",
+        "compases": [
+            [
+                "silencio_corchea",
+                "corchea",
+                "silencio_negra",
+                "negra",
+                "corchea",
+                "corchea"
+            ],
+            [
+                "silencio_corchea",
+                "silencio_corchea",
+                "silencio_negra",
+                "silencio_negra",
+                "silencio_negra"
+            ]
+        ],
+        "tempo": 120
     }
 ]
