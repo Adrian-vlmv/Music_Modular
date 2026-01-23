@@ -2,6 +2,7 @@ import tkinter as tk
 from midi_engine.midi_setup import iniciar_sistema_midi
 from gui.voicing_builder_gui import VoicingBuilderGUI
 from gui.pattern_builder_gui import RhythmBuilderGUI
+from gui.progressions_gui import ProgressionsGUI
 
 
 ## -----------------------------
@@ -69,10 +70,29 @@ def main():
 
         top.protocol("WM_DELETE_WINDOW", _on_close)
 
+    # holder para Progressions
+    progressions_win = {"win": None}
+
+    def open_progressions():
+        if progressions_win["win"] and tk.Toplevel.winfo_exists(progressions_win["win"]):
+            progressions_win["win"].lift()
+            return
+
+        top = tk.Toplevel(root)
+        top.title("Progressions")
+        progressions_win["win"] = top
+
+        ProgressionsGUI(top, player)
+
+        def _on_close_prog():
+            progressions_win["win"] = None
+            top.destroy()
+
+        top.protocol("WM_DELETE_WINDOW", _on_close_prog)
+
     file_menu.add_command(label="Rhythm Builder", command=open_rhythm_builder)
-
-
     file_menu.add_command(label="Voicing Builder", command=open_voicing_builder)
+    file_menu.add_command(label="Progressions", command=open_progressions)
     file_menu.add_separator()
     file_menu.add_command(label="Exit", command=root.quit)
 
