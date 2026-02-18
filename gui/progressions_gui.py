@@ -25,20 +25,23 @@ _SEMITONE_TO_NAME_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 
 
 def _note_to_midi(note):
-    m = re.match(r'^([A-G][#b]?)(-?\d+)$', note)
+    """Convierte 'C4' o 'C#3' a número MIDI (C4=60). Lanza ValueError si formato inválido."""
+    m = re.match(r'^([A-Ga-g][#b]?)(-?\d+)$', str(note))
     if not m:
-        raise ValueError(f'Invalid note: {note}')
+        raise ValueError(f"Nota inválida: {note}")
     name = m.group(1)
     octave = int(m.group(2))
-    name = name[0].upper() + (name[1] if len(name) > 1 else '')
+    name = name[0].upper() + (name[1] if len(name) > 1 else "")
     if name not in _NOTE_TO_SEMITONE:
-        raise ValueError(f'Unknown note name: {name}')
+        raise ValueError(f"Nombre de nota desconocido: {name}")
     sem = _NOTE_TO_SEMITONE[name]
     midi = (octave + 1) * 12 + sem
     return midi
 
 
 def _midi_to_note(midi):
+    """Convierte número MIDI a 'C4' usando sostenidos (ej. 60 -> C4)."""
+    midi = int(midi)
     octave = midi // 12 - 1
     sem = midi % 12
     name = _SEMITONE_TO_NAME_SHARP[sem]
@@ -46,49 +49,68 @@ def _midi_to_note(midi):
 
 
 def transpose_notes(notes, orig_root, target_root):
-    """Transpose list of note strings (e.g. ['C3','E3']) so that orig_root -> target_root.
-    target_root may be 'C' (no octave) or 'C4'. If no octave provided, use octave of orig_root.
+    """Transpone lista de notas 'notes' desde orig_root hacia target_root.
+    Si target_root no incluye octava, usa la octava de orig_root.
+    Devuelve lista de notas nuevas conservando entradas inválidas sin cambios.
     """
     try:
         m_orig = _note_to_midi(orig_root)
     except Exception:
-        # can't parse orig_root, return original
-        return notes[:]
+        # si no podemos interpretar orig_root, devolver original
+        return list(notes)
 
-    # prepare target root with octave if missing
-    m_target = None
-    try:
-        # if target_root already has octave
-        if re.match(r'^([A-G][#b]?)-?\d+$', target_root):
+    # preparar target_root: si no tiene octava, tomar la octava de orig_root
+    if re.match(r'^([A-Ga-g][#b]?)(-?\d+)$', str(target_root)):
+        try:
             m_target = _note_to_midi(target_root)
-        else:
-            # append octave from orig_root
-            mo = re.match(r'^([A-G][#b]?)(-?\d+)$', orig_root)
-            if mo:
-                octo = mo.group(2)
-                m_target = _note_to_midi(f"{target_root}{octo}")
-            else:
-                # fallback: use same midi as orig
-                m_target = m_orig
-    except Exception:
-        m_target = m_orig
+        except Exception:
+            m_target = m_orig
+    else:
+        # usar la octava de orig_root
+        try:
+            m_target = _note_to_midi(f"{str(target_root)}{int((m_orig // 12) - 1)}")
+        except Exception:
+            m_target = m_orig
 
     delta = m_target - m_orig
-
-    out = []
+    result = []
     for n in notes:
         try:
-            m = _note_to_midi(n)
-            m2 = m + delta
-            # clamp
-            if m2 < 0:
-                m2 = 0
-            if m2 > 127:
-                m2 = 127
-            out.append(_midi_to_note(m2))
+            m_n = _note_to_midi(n)
+            m2 = m_n + delta
+            result.append(_midi_to_note(m2))
         except Exception:
-            out.append(n)
-    return out
+            # si una nota no se puede parsear, dejarla tal cual
+            result.append(n)
+    return result
+
+
+def _is_silence(ev):
+    """Detecta si un evento del patrón representa un silencio/rest.
+    Soporta dicts con keys típicas ('rest','silence','note', 'pitch') y objetos con atributos.
+    """
+    if ev is None:
+        return True
+    if isinstance(ev, dict):
+        if ev.get('rest') or ev.get('silence'):
+            return True
+        # note/pitch explicitly None => rest
+        if ('note' in ev and ev.get('note') is None) or ('pitch' in ev and ev.get('pitch') is None):
+            return True
+        # some rhythm formats use {'type':'rest'}
+        if ev.get('type') in ('rest', 'silence'):
+            return True
+    # object-like events
+    try:
+        if hasattr(ev, 'rest') and getattr(ev, 'rest'):
+            return True
+        if hasattr(ev, 'note') and getattr(ev, 'note') is None:
+            return True
+        if hasattr(ev, 'pitch') and getattr(ev, 'pitch') is None:
+            return True
+    except Exception:
+        pass
+    return False
 
 
 class ProgressionsGUI:
@@ -318,22 +340,31 @@ class ProgressionsGUI:
                     # prepare voicing choices sorted with matches first
                     block_root = block.get("root")
                     choices = ["(none)"] + self._sorted_voicing_names(block_root)
-                    cb = ttk.Combobox(sub, values=choices, width=36)
-                    sel_name = vm[ei] if vm[ei] is not None else "(none)"
-                    cb.set(sel_name)
-                    
 
-                    
+                    # If this event is a silence/rest, show a disabled label instead of a combobox
+                    if _is_silence(ev):
+                        ttk.Label(sub, text="silence", width=36, foreground="gray").pack(side="left", padx=6)
+                        # ensure mapping knows it's None
+                        vm = block.get("voicing_map") or []
+                        if len(vm) < ei + 1:
+                            vm = vm + [None] * (ei + 1 - len(vm))
+                        vm[ei] = None
+                        block["voicing_map"] = vm
+                    else:
+                        cb = ttk.Combobox(sub, values=choices, width=36)
+                        sel_name = vm[ei] if vm[ei] is not None else "(none)"
+                        cb.set(sel_name)
 
-                    def on_voicing_change(event, bi=i, ei_local=ei, cb_local=cb):
-                        val = cb_local.get()
-                        if val == "(none)":
-                            self.blocks[bi]["voicing_map"][ei_local] = None
-                        else:
-                            self.blocks[bi]["voicing_map"][ei_local] = val
+                        def on_voicing_change(event=None, bi=i, ei_local=ei, cb_local=cb):
+                            val = cb_local.get()
+                            vm_local = self.blocks[bi].get('voicing_map') or []
+                            if len(vm_local) < ei_local + 1:
+                                vm_local = vm_local + [None] * (ei_local + 1 - len(vm_local))
+                            vm_local[ei_local] = None if val == "(none)" else val
+                            self.blocks[bi]['voicing_map'] = vm_local
 
-                    cb.bind("<<ComboboxSelected>>", on_voicing_change)
-                    cb.pack(side="left", padx=6)
+                        cb.bind("<<ComboboxSelected>>", on_voicing_change)
+                        cb.pack(side="left", padx=6)
         # end for blocks
 
     def _sorted_voicing_names(self, root_name):
@@ -430,7 +461,10 @@ class ProgressionsGUI:
                             vroot = vobj.get('root')
                             block_root = block.get('root')
                             if vroot and block_root:
-                                notes_to_play = transpose_notes(notes, vroot, block_root)
+                                try:
+                                    notes_to_play = transpose_notes(notes, vroot, block_root)
+                                except Exception:
+                                    notes_to_play = notes
                             else:
                                 notes_to_play = notes
                         except Exception:
@@ -605,12 +639,3 @@ class ProgressionsGUI:
             return list(pattern)
         except Exception:
             return []
-
-
-# simple helper to open the GUI standalone
-if __name__ == '__main__':
-    root = tk.Tk()
-    from midi_engine.midi_setup import iniciar_sistema_midi
-    player = iniciar_sistema_midi()
-    ProgressionsGUI(root, player)
-    root.mainloop()
