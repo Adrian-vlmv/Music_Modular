@@ -1,4 +1,4 @@
-# gui/voicing_builder_gui.py
+# gui/voicings_gui.py
 
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -23,81 +23,11 @@ from storage_engine.voicing_storage import load_voicings, save_voicings
 
 
 ## --------------------------------------------------------------------------------------------------------------------
-## Class: VoicingBuilderGUI
+## Class: VoicingsGUI
 ## Description: Clase principal para la GUI del Voicing Builder.
 ## --------------------------------------------------------------------------------------------------------------------
-class VoicingBuilderGUI:
+class VoicingsGUI:
 
-    # Notas en orden cromático (usadas para transposición)
-    CHROMATIC_SCALE = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-
-    ## -------------------------------------------------------
-    ## HELPER FUNCTIONS PARA TRANSPOSICIÓN
-    ## -------------------------------------------------------
-    
-    @staticmethod
-    def note_to_midi(note_str):
-        """Convierte una nota (ej. 'C4') a su número MIDI correspondiente."""
-        if note_str in BD_Notas_Midi:
-            return BD_Notas_Midi[note_str]
-        return None
-    
-    @staticmethod
-    def midi_to_note(midi_num):
-        """Convierte un número MIDI a la nota más probable (usando preferencia por naturales)."""
-        # Crear mapeo inverso con preferencia: naturales primero, luego sostenidos
-        reverse_map = {}
-        for note, midi in BD_Notas_Midi.items():
-            if midi not in reverse_map:
-                reverse_map[midi] = note
-            else:
-                # Preferir naturales (sin # ni b) sobre sostenidos/bemoles
-                if '#' not in note and 'b' not in note:
-                    reverse_map[midi] = note
-                elif '#' in reverse_map[midi] or 'b' in reverse_map[midi]:
-                    if '#' not in note and 'b' not in note:
-                        reverse_map[midi] = note
-        
-        return reverse_map.get(midi_num, None)
-    
-    @staticmethod
-    def transpose_note(note_str, semitone_offset):
-        """Transpone una nota por una cantidad de semitonos."""
-        midi_num = VoicingBuilderGUI.note_to_midi(note_str)
-        if midi_num is None:
-            return note_str  # devolver sin cambios si no es válida
-        
-        new_midi = midi_num + semitone_offset
-        
-        # Limitar rango MIDI (0-127)
-        if new_midi < 0 or new_midi > 127:
-            return None
-        
-        return VoicingBuilderGUI.midi_to_note(new_midi)
-    
-    @staticmethod
-    def transpose_voicing(notes_list, semitone_offset):
-        """Transpone todas las notas de un voicing."""
-        transposed = []
-        for note in notes_list:
-            new_note = VoicingBuilderGUI.transpose_note(note, semitone_offset)
-            if new_note is None:
-                return None  # Alguna nota salió del rango
-            transposed.append(new_note)
-        return transposed
-
-    ## ------------------------------
-    ## Function: _initialize_original_states
-    ## Description: Inicializa el estado original de todos los voicings para la transposición global.
-    ## ------------------------------
-    def _initialize_original_states(self):
-        """Inicializa el estado original de todos los voicings."""
-        for v in self.voicings:
-            # Solo guardar si no existe ya (para no sobreescribir)
-            if "original_notes" not in v:
-                v["original_notes"] = v.get("notes", []).copy()
-            if "original_root" not in v:
-                v["original_root"] = v.get("root", "")
 
     ## ------------------------------
     ## Function: __init__
@@ -151,13 +81,6 @@ class VoicingBuilderGUI:
         self.current_voicing_name = None  # nombre del voicing que estamos editando
         self.current_voicing_index = None
         self.preview_enabled = tk.BooleanVar(value=False)
-        
-        # Para guardar el estado original del voicing (sin transposición)
-        self.original_voicing_notes = []
-        self.original_voicing_root = ""
-
-        # Inicializar estado original de todos los voicings
-        self._initialize_original_states()
 
         # ------------------------------
         #   NOTAS DISPONIBLES
@@ -278,79 +201,6 @@ class VoicingBuilderGUI:
                         command=self.assign_hotkey)
         btn_hotkey.grid(row=5, column=0, pady=3, sticky="ew")
 
-        # -------------------------------------------------------
-        # TRANSPOSICIÓN (Semitonos y Octavas)
-        # -------------------------------------------------------
-        ttk.Label(frame_saved, text="Transpose").grid(row=6, column=0, columnspan=1, pady=(10, 3), sticky="w")
-
-        # Frame para semitonos
-        frame_semitone = ttk.Frame(frame_saved)
-        frame_semitone.grid(row=7, column=0, pady=3, sticky="ew", padx=5)
-        ttk.Label(frame_semitone, text="Semitone:").pack(side="left", padx=2)
-        
-        self.semitone_var = tk.IntVar(value=0)
-        self.spinbox_semitone = ttk.Spinbox(
-            frame_semitone, from_=-12, to=12, textvariable=self.semitone_var, width=5
-        )
-        self.spinbox_semitone.pack(side="left", padx=2)
-
-        # Frame para octavas
-        frame_octave = ttk.Frame(frame_saved)
-        frame_octave.grid(row=8, column=0, pady=3, sticky="ew", padx=5)
-        ttk.Label(frame_octave, text="Octave:").pack(side="left", padx=2)
-        
-        self.octave_var = tk.IntVar(value=0)
-        self.spinbox_octave = ttk.Spinbox(
-            frame_octave, from_=-2, to=2, textvariable=self.octave_var, width=5
-        )
-        self.spinbox_octave.pack(side="left", padx=2)
-
-        # Agregar trace para cambios automáticos en los spinboxes
-        self.semitone_var.trace("w", self._on_transpose_changed)
-        self.octave_var.trace("w", self._on_transpose_changed)
-
-        # Botón resetear transposición
-        btn_reset_transpose = ttk.Button(frame_saved, text="Reset Offset",
-                                        command=self.reset_transpose_offset)
-        btn_reset_transpose.grid(row=9, column=0, pady=3, sticky="ew")
-
-        # -------------------------------------------------------
-        # TRANSPOSICIÓN PARA TODOS LOS VOICINGS
-        # -------------------------------------------------------
-        frame_transpose_all = ttk.LabelFrame(frame_saved, text="Transpose All Voicings")
-        frame_transpose_all.grid(row=10, column=0, pady=(15, 3), sticky="ew", padx=5)
-
-        # Frame para semitonos (todos)
-        frame_all_semitone = ttk.Frame(frame_transpose_all)
-        frame_all_semitone.pack(fill="x", pady=2, padx=5)
-        ttk.Label(frame_all_semitone, text="Semitone:").pack(side="left", padx=2)
-        
-        self.all_semitone_var = tk.IntVar(value=0)
-        self.spinbox_all_semitone = ttk.Spinbox(
-            frame_all_semitone, from_=-12, to=12, textvariable=self.all_semitone_var, width=5
-        )
-        self.spinbox_all_semitone.pack(side="left", padx=2)
-
-        # Frame para octavas (todos)
-        frame_all_octave = ttk.Frame(frame_transpose_all)
-        frame_all_octave.pack(fill="x", pady=2, padx=5)
-        ttk.Label(frame_all_octave, text="Octave:").pack(side="left", padx=2)
-        
-        self.all_octave_var = tk.IntVar(value=0)
-        self.spinbox_all_octave = ttk.Spinbox(
-            frame_all_octave, from_=-2, to=2, textvariable=self.all_octave_var, width=5
-        )
-        self.spinbox_all_octave.pack(side="left", padx=2)
-
-        # Agregar trace para cambios automáticos en los spinboxes de todos
-        self.all_semitone_var.trace("w", self._on_transpose_all_changed)
-        self.all_octave_var.trace("w", self._on_transpose_all_changed)
-
-        # Botón resetear transposición para todos
-        btn_reset_all_transpose = ttk.Button(frame_transpose_all, text="Reset All Offsets",
-                                           command=self.reset_all_transpose_offset)
-        btn_reset_all_transpose.pack(fill="x", pady=5, padx=5)
-
 
         self.update_tree()
 
@@ -419,225 +269,6 @@ class VoicingBuilderGUI:
 
 
     ## ------------------------------
-    ## Function: _on_transpose_changed
-    ## Description: Se llama automáticamente cuando cambian los spinboxes de transposición.
-    ## Transpone el voicing actual en tiempo real.
-    ## \param var, index, mode: parámetros del trace callback.
-    ## ------------------------------
-    def _on_transpose_changed(self, var=None, index=None, mode=None):
-        """Se llama automáticamente cuando cambian los spinboxes."""
-        if not self.current_voicing_name or not self.original_voicing_notes:
-            return
-
-        # Obtener valores de los spinboxes
-        semitone_offset = self.semitone_var.get()
-        octave_offset = self.octave_var.get()
-        
-        # Convertir octavas a semitonos (1 octava = 12 semitonos)
-        total_semitone_offset = semitone_offset + (octave_offset * 12)
-
-        # Transponer notas originales
-        notas_transposed = self.transpose_voicing(self.original_voicing_notes, total_semitone_offset)
-        
-        if notas_transposed is None:
-            # Si se sale de rango, resetear los spinboxes
-            self.semitone_var.set(0)
-            self.octave_var.set(0)
-            messagebox.showerror("Fuera de rango", "La transposición saca las notas del rango válido (MIDI 0-127).")
-            return
-
-        # Actualizar listbox sin triggering de callbacks
-        self.voicing_listbox.delete(0, tk.END)
-        for nota in notas_transposed:
-            self.voicing_listbox.insert(tk.END, nota)
-
-        # Transponer la root si existe
-        if self.original_voicing_root:
-            root_transposed = self.transpose_note(self.original_voicing_root, total_semitone_offset)
-            if root_transposed:
-                m = re.match(r'^([A-G][#b]?)(-?\d+)$', root_transposed)
-                if m:
-                    self.combo_root_nota.set(m.group(1))
-                    self.combo_root_octava.set(m.group(2))
-
-        # Actualizar el voicing en la lista de voicings
-        for v in self.voicings:
-            if v["name"] == self.current_voicing_name:
-                v["notes"] = notas_transposed
-                if root_transposed:
-                    v["root"] = root_transposed
-                break
-
-        # Actualizar el treeview
-        self.update_tree()
-
-        # Reproducir preview si está habilitado
-        if self.preview_enabled.get():
-            try:
-                reproducir_acorde_threaded(self.player, notas_transposed, duracion=1.0)
-            except Exception:
-                pass
-
-        # Marcar como modificado (habilitar Save button)
-        if self.current_voicing_name:
-            self.btn_save.state(["!disabled"])
-
-        # Guardar automáticamente en JSON
-        save_voicings(self.voicings)
-
-
-    ## ------------------------------
-    ## Function: apply_transpose
-    ## Description: Guarda la transposición actual como el nuevo voicing.
-    ## (Ya no es necesario presionar un botón, se usa automáticamente)
-    ## ------------------------------
-    def apply_transpose(self):
-        """Guarda la transposición actual como el nuevo voicing."""
-        if not self.current_voicing_name:
-            messagebox.showwarning("Nada cargado", "Carga un voicing primero.")
-            return
-
-        # Obtener notas actuales del listbox (ya están transposicionadas)
-        notas_actuales = list(self.voicing_listbox.get(0, tk.END))
-        
-        # Actualizar el voicing
-        for v in self.voicings:
-            if v["name"] == self.current_voicing_name:
-                v["notes"] = notas_actuales
-                root_note = self.combo_root_nota.get()
-                root_oct = self.combo_root_octava.get()
-                if root_note and root_oct:
-                    v["root"] = f"{root_note}{root_oct}"
-                break
-
-        save_voicings(self.voicings)
-        messagebox.showinfo("Guardado", f"Voicing '{self.current_voicing_name}' actualizado con transposición.")
-        
-        # Resetear offsets y guardar nuevo estado original
-        self.semitone_var.set(0)
-        self.octave_var.set(0)
-        self.original_voicing_notes = notas_actuales.copy()
-        self.update_tree()
-
-
-    ## ------------------------------
-    ## Function: reset_transpose_offset
-    ## Description: Resetea los valores de transposición a 0.
-    ## ------------------------------
-    def reset_transpose_offset(self):
-        self.semitone_var.set(0)
-        self.octave_var.set(0)
-        messagebox.showinfo("Offset", "Transpose offset reset to 0.")
-
-
-    ## ------------------------------
-    ## Function: _on_transpose_all_changed
-    ## Description: Se llama automáticamente cuando cambian los spinboxes de transposición para todos los voicings.
-    ## Transpone TODOS los voicings en tiempo real.
-    ## \param var, index, mode: parámetros del trace callback.
-    ## ------------------------------
-    def _on_transpose_all_changed(self, var=None, index=None, mode=None):
-        """Se llama automáticamente cuando cambian los spinboxes para todos los voicings."""
-        # Obtener valores de los spinboxes para todos
-        semitone_offset = self.all_semitone_var.get()
-        octave_offset = self.all_octave_var.get()
-        
-        # Convertir octavas a semitonos (1 octava = 12 semitonos)
-        total_semitone_offset = semitone_offset + (octave_offset * 12)
-
-        if total_semitone_offset == 0:
-            # Si es 0, no hacer nada (todos los voicings ya están en su estado original)
-            return
-
-        # Transponer TODOS los voicings
-        for v in self.voicings:
-            original_notes = v.get("original_notes", v.get("notes", []))
-            original_root = v.get("original_root", v.get("root", ""))
-
-            # Transponer notas
-            notas_transposed = self.transpose_voicing(original_notes, total_semitone_offset)
-            if notas_transposed is None:
-                # Si se sale de rango, resetear los spinboxes
-                self.all_semitone_var.set(0)
-                self.all_octave_var.set(0)
-                messagebox.showerror("Fuera de rango", "La transposición saca las notas del rango válido (MIDI 0-127).")
-                return
-
-            # Actualizar el voicing con las notas transpuestas
-            v["notes"] = notas_transposed
-
-            # Transponer la root si existe
-            if original_root:
-                root_transposed = self.transpose_note(original_root, total_semitone_offset)
-                if root_transposed:
-                    v["root"] = root_transposed
-
-        # Actualizar el treeview
-        self.update_tree()
-
-        # Si hay un voicing seleccionado, actualizar también el listbox y los controles
-        if self.current_voicing_name:
-            for v in self.voicings:
-                if v["name"] == self.current_voicing_name:
-                    # Actualizar listbox
-                    self.voicing_listbox.delete(0, tk.END)
-                    for nota in v["notes"]:
-                        self.voicing_listbox.insert(tk.END, nota)
-
-                    # Actualizar root en comboboxes
-                    root_note = v.get("root", "")
-                    if root_note:
-                        m = re.match(r'^([A-G][#b]?)(-?\d+)$', root_note)
-                        if m:
-                            self.combo_root_nota.set(m.group(1))
-                            self.combo_root_octava.set(m.group(2))
-                    break
-
-        # Guardar automáticamente en JSON
-        save_voicings(self.voicings)
-
-
-    ## ------------------------------
-    ## Function: reset_all_transpose_offset
-    ## Description: Resetea los valores de transposición para todos los voicings.
-    ## ------------------------------
-    def reset_all_transpose_offset(self):
-        self.all_semitone_var.set(0)
-        self.all_octave_var.set(0)
-        
-        # Restaurar todos los voicings a su estado original
-        for v in self.voicings:
-            if "original_notes" in v:
-                v["notes"] = v["original_notes"]
-            if "original_root" in v:
-                v["root"] = v["original_root"]
-        
-        # Actualizar el treeview
-        self.update_tree()
-        
-        # Si hay un voicing seleccionado, actualizar también el listbox
-        if self.current_voicing_name:
-            for v in self.voicings:
-                if v["name"] == self.current_voicing_name:
-                    self.voicing_listbox.delete(0, tk.END)
-                    for nota in v["notes"]:
-                        self.voicing_listbox.insert(tk.END, nota)
-                    
-                    root_note = v.get("root", "")
-                    if root_note:
-                        m = re.match(r'^([A-G][#b]?)(-?\d+)$', root_note)
-                        if m:
-                            self.combo_root_nota.set(m.group(1))
-                            self.combo_root_octava.set(m.group(2))
-                    break
-        
-        # Guardar automáticamente en JSON
-        save_voicings(self.voicings)
-        
-        messagebox.showinfo("Offset", "All transpose offsets reset to 0.")
-
-
-    ## ------------------------------
     ## Function: on_voicing_click
     ## Description: Maneja el click en un voicing del treeview.
     ## ------------------------------
@@ -670,10 +301,6 @@ class VoicingBuilderGUI:
         for n in notas:
             self.voicing_listbox.insert(tk.END, n)
 
-        # Guardar estado original del voicing (para transposición)
-        self.original_voicing_notes = notas.copy()
-        self.original_voicing_root = root_note
-
         # seleccionar la primera nota del listbox (si existe) para mostrarla y permitir preview
         try:
             if self.voicing_listbox.size() > 0:
@@ -705,10 +332,6 @@ class VoicingBuilderGUI:
 
         # Habilitar Save (estás editando un voicing existente)
         self.btn_save.state(["!disabled"])
-
-        # Resetear offsets de transposición
-        self.semitone_var.set(0)
-        self.octave_var.set(0)
 
         # Reproducir preview si está habilitado
         if self.preview_enabled.get():
@@ -1145,7 +768,6 @@ class VoicingBuilderGUI:
         save_voicings(voicings)
 
         self.voicings = voicings
-        self._initialize_original_states()
         self.update_tree()
 
         # Añadir a recientes y actualizar menu
@@ -1291,7 +913,6 @@ class VoicingBuilderGUI:
             save_voicings(voicings)
 
             self.voicings = voicings
-            self._initialize_original_states()
             self.update_tree()
 
             # messagebox.showinfo("Loaded", f"Loaded voicings from '{path}'.")

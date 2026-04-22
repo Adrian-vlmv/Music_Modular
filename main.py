@@ -1,3 +1,4 @@
+from logging import root
 import tkinter as tk
 from midi_engine.midi_setup import iniciar_sistema_midi
 from gui.voicing_builder_gui import VoicingBuilderGUI

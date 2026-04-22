@@ -2,8 +2,17 @@
     "voicings": [
         {
             "name": "Maj 15 3579",
-            "root": "C3",
+            "root": "C4",
             "notes": [
+                "C3",
+                "G3",
+                "E4",
+                "G4",
+                "B4",
+                "D5"
+            ],
+            "hotkey": "1",
+            "original_notes": [
                 "C2",
                 "G2",
                 "E3",
@@ -11,12 +20,21 @@
                 "B3",
                 "D4"
             ],
-            "hotkey": "1"
+            "original_root": "C3"
         },
         {
             "name": "m7 15 3579",
-            "root": "D3",
+            "root": "D4",
             "notes": [
+                "D3",
+                "A3",
+                "F4",
+                "A4",
+                "C5",
+                "E5"
+            ],
+            "hotkey": "2",
+            "original_notes": [
                 "D2",
                 "A2",
                 "F3",
@@ -24,24 +42,42 @@
                 "C4",
                 "E4"
             ],
-            "hotkey": "2"
+            "original_root": "D3"
         },
         {
             "name": "m7 15 3579",
-            "root": "E3",
+            "root": "E4",
             "notes": [
+                "E3",
+                "B3",
+                "G4",
+                "B4",
+                "D5",
+                "F5"
+            ],
+            "original_notes": [
                 "E2",
                 "B2",
                 "G3",
                 "B3",
                 "D4",
                 "F4"
-            ]
+            ],
+            "original_root": "E3"
         },
         {
             "name": "7 15 3579",
-            "root": "E3",
+            "root": "E4",
             "notes": [
+                "E3",
+                "B3",
+                "G#4",
+                "B4",
+                "D5",
+                "F5"
+            ],
+            "hotkey": "3",
+            "original_notes": [
                 "E2",
                 "B2",
                 "G#3",
@@ -49,12 +85,21 @@
                 "D4",
                 "F4"
             ],
-            "hotkey": "3"
+            "original_root": "E3"
         },
         {
             "name": "m7 51 7935",
-            "root": "F3",
+            "root": "F4",
             "notes": [
+                "F3",
+                "C3",
+                "A4",
+                "C5",
+                "E4",
+                "G4"
+            ],
+            "hotkey": "4",
+            "original_notes": [
                 "F2",
                 "C2",
                 "A3",
@@ -62,12 +107,21 @@
                 "E3",
                 "G3"
             ],
-            "hotkey": "4"
+            "original_root": "F3"
         },
         {
             "name": "7 51 7935",
-            "root": "G3",
+            "root": "G4",
             "notes": [
+                "G3",
+                "D3",
+                "B4",
+                "D5",
+                "F4",
+                "A4"
+            ],
+            "hotkey": "5",
+            "original_notes": [
                 "G2",
                 "D2",
                 "B3",
@@ -75,12 +129,21 @@
                 "F3",
                 "A3"
             ],
-            "hotkey": "5"
+            "original_root": "G3"
         },
         {
             "name": "m7 51 7935",
-            "root": "A3",
+            "root": "A4",
             "notes": [
+                "A3",
+                "E3",
+                "C5",
+                "E5",
+                "G4",
+                "B4"
+            ],
+            "hotkey": "6",
+            "original_notes": [
                 "A2",
                 "E2",
                 "C4",
@@ -88,12 +151,21 @@
                 "G3",
                 "B3"
             ],
-            "hotkey": "6"
+            "original_root": "A3"
         },
         {
             "name": "\u00d8 51 7935",
-            "root": "B3",
+            "root": "B4",
             "notes": [
+                "B3",
+                "F3",
+                "D5",
+                "F5",
+                "A4",
+                "C5"
+            ],
+            "hotkey": "7",
+            "original_notes": [
                 "B2",
                 "F2",
                 "D4",
@@ -101,7 +173,7 @@
                 "A3",
                 "C4"
             ],
-            "hotkey": "7"
+            "original_root": "B3"
         }
     ]
 }
